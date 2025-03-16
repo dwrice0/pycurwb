@@ -7,7 +7,7 @@ A demo program to show the Cisco URWB telemetry library in action
 
 from scapy.all import *
 from scapy.layers.inet import UDP
-from curwb import *
+from pycurwb import *
 import typer
 
 app = typer.Typer()     #initialize typer app
