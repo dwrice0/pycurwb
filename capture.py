@@ -1,7 +1,7 @@
 """
 capture.py
 David Rice
-
+Version 1.0
 A demo program to show the Cisco URWB telemetry library in action
 """
 

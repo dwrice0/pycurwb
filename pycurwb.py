@@ -1,7 +1,7 @@
 """
 pycurwb.py
 David Rice
-
+Version 0.1
 A Python library for decoding Cisco URWB telemetry packets - version 2.0.19
 """
 
