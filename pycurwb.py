@@ -53,12 +53,14 @@ class URWBTelemetry(Packet):
     """
     Custom Packet class for the Cisco URWB telemetry header
     TODO: Handle TS_REF differently as it is currently divided into two different variables seconds and microseconds
-    TODO: Decode FLAGS bits
+    TODO: Decode FLAGS bits -- Completed - Needs Testing
     """
     name = "URWB Telemetry"
     fields_desc = [
         BitField("MAGIC_NUM", None, 32),
-        BitField("FLAGS", None, 32),
+        BitField("FLAGS_TLV_TYPE", None, 1),
+        BitField("FLAGS_AF", None, 1),
+        BitField("FLAGS_RES", None, 30),
         IPField("MESH_ID", None),
         BitField("VEHICLE_ID", None, 32),
         IPField("MESHEND_ID", None),
@@ -71,17 +73,23 @@ class URWBTelemetry(Packet):
 class FHCTRL_ENTRY(Packet):
    """
    Custom Packet class for fhctrl entries in the FHCTRL_VEHICLE_TLV and the FHCTRL_VEHICLE_MULTI_RADIO_TLV
-   TODO: Decode DOP bits, CHAN_INFO bits and FLAGS bits
+   TODO: Decode DOP bits, CHAN_INFO bits and FLAGS bits -- Completed - Needs Testing
    """
    name = "FHCTRL_ENTRY"
    fields_desc = [
      IPField("SBR_ID", None),
      IPField("MBR_ID", None),
-     BitField("DOP", None, 32),
-     BitField("CHAN_INFO", None, 16),
+     BitField("DOP_VALUE", None, 16),
+     BitField("DOP_COLOR", None, 16),
+     BitField("CHAN_INFO_CHAN", None, 8),
+     BitField("CHAN_INFO_RES", None, 4),
+     BitField("CHAN_INFO_WIDTH", None, 4),
      BitField("AGE", None, 16),
      BitField("RSSI", None, 8),
-     BitField("FLAGS", None, 8)
+     BitField("FLAGS_SCAN", None, 1),
+     BitField("FLAGS_RES", None, 3),
+     BitField("FLAGS_LINK", None, 1),
+     BitField("FLAGS_LINKID", None, 3)
    ]
    def extract_padding(self, s):
     return "", s
@@ -90,7 +98,7 @@ class FHCTRL_VEHICLE_TLV(Packet):
    """
    Custom Packet class for the FHCTRL_VEHICLE TLV (Type: 0x001)
    TODO: Handle HO_TIME differently as it is currently divided into two different variables seconds and microseconds
-   TODO: Decode HO_FLAGS bits, DOP bits and FLAGS bits
+   TODO: Decode HO_FLAGS bits, DOP bits and FLAGS bits -- Completed - Needs Testing
    """
    name = "FHCTRL_VEHICLE__TLV"
    fields_desc = [
@@ -102,11 +110,18 @@ class FHCTRL_VEHICLE_TLV(Packet):
      BitField("HO_TIME_sec", None, 32),
      BitField("HO_TIME_usec", None, 32),
      BitField("HO_RETRIES", None, 8),
-     BitField("HO_FLAGS", None, 8),
+     BitField("HO_FLAGS_RES", None, 6),
+     BitField("HO_FLAGS_PEND", None, 1),
+     BitField("HO_FLAGS_FAIL", None, 1),
      BitField("HO_AGE", None, 32),
-     BitField("DOP", None, 32),
-     BitField("FLAGS", None, 16),
-     BitField("INHIBIT", None, 16),
+     BitField("DOP_VAL", None, 16),
+     BitField("DOP_COLOR", None, 16),
+     BitField("FLAGS_WRELAY", None, 1),
+     BitField("FLAGS_CANACCEPT", None, 1),
+     BitField("FLAGS_ISCRITICAL", None, 1),
+     BitField("FLAGS_SCANNING", None, 1),
+     BitField("FLAGS_RES", None, 12),
+     BitField("INHIBIT_MASK", None, 16),
      PacketListField("FHCTRL_ENTRIES", FHCTRL_ENTRY(), FHCTRL_ENTRY, count_from=lambda pkt:(pkt.LENGTH-34)/18)
    ]
    def extract_padding(self, s):
@@ -116,14 +131,17 @@ class TITAN_TLV(Packet):
    """
    Custom Packet class for the TITAN TLV (Type: 0x00A)
    TODO: Handle TIMESTAMP differently as it is currently divided into two different variables seconds and microseconds
-   TODO: Decode TITAN_TYPE bits, FLAGS bits
+   TODO: Decode TITAN_TYPE bits, FLAGS bits -- Completed - Needs Testing
    """
    name = "TITAN_TLV"
    fields_desc = [
      BitField("TYPE", None, 16),
      BitField("LENGTH", None, 16),
-     BitField("TITAN_TYPE", None, 8),
-     BitField("FLAGS", None, 8),
+     BitField("TITAN_EVENT_TYPE", None, 4),
+     BitField("TITAN_RES", None, 4),
+     BitField("FLAGS_REASON", None, 4),
+     BitField("FLAGS_DOMAIN", None, 1),
+     BitField("FLAGS_RES", None, 3),
      BitField("TIMESTAMP_SEC", None, 32),
      BitField("TIMESTAMP_USEC", None, 32),
      BitField("COUNT", None, 32),
@@ -161,18 +179,35 @@ class ETH_TPT_TLV(Packet):
    def extract_padding(self, s):
      return "", s
 
+class PEER(Packet):
+   """
+   Custom Packet class for the PEER array (part of the MULTIPATH TLV)
+   """
+   name = "PEER"
+   fields_desc = [
+     BitField("MESH_ID", None, 24),
+     BitField("LOCAL_INT", None, 4),
+     BitField("REMOTE_INT", None, 4),
+   ]
+   def extract_padding(self, s):
+    return "", s
+
 class MULTIPATH_TLV(Packet):
    """
    Custom Packet class for the MULTIPATH_TLV (Type: 0x01B)
-   TODO: Decode FLAGS bits and PEERS bits
+   TODO: Decode FLAGS bits and PEERS bits -- Completed - Needs Testing
    """
    name = "MULTIPATH_TLV"
    fields_desc = [
      BitField("TYPE", None, 16),
      BitField("LENGTH", None, 16),
-     BitField("FLAGS", None, 8),
+     BitField("FLAGS_MOBLSP", None, 1),
+     BitField("FLAGS_RES1", None, 1),
+     BitField("FLAGS_DEST_GG", None, 1),
+     BitField("FLAGS_RES2", 0, 2),
+     BitField("FLAGS_MPO_PID", None, 3),
      BitField("NUM_PEERS", None, 8),
-     FieldListField("PEERS", None, BitField("PEER", None, 32), count_from=lambda pkt:pkt.NUM_PEERS)
+     FieldListField("PEERS", PEER(), PEER, count_from=lambda pkt:pkt.NUM_PEERS)
    ]
    def extract_padding(self, s):
      return "", s
@@ -181,7 +216,7 @@ class FHCTRL_VEHICLE_MULTI_RADIO_TLV(Packet):
    """
    Custom Packet class for the FHCTRL_VEHICLE_MULTI_RADIO TLV (Type: 0x01D)
    TODO: Handle HO_TIME differently as it is currently divided into two different variables seconds and microseconds
-   TODO: Decode HO_FLAGS bits, DOP bits and FLAGS bits
+   TODO: Decode HO_FLAGS bits, DOP bits and FLAGS bits -- Completed - Needs Testing
    """
    name = "FHCTRL_VEHICLE_MULTI_RADIO_TLV"
    fields_desc = [
@@ -193,10 +228,17 @@ class FHCTRL_VEHICLE_MULTI_RADIO_TLV(Packet):
      BitField("HO_TIME_sec", None, 32),
      BitField("HO_TIME_usec", None, 32),
      BitField("HO_RETRIES", None, 8),
-     BitField("HO_FLAGS", None, 8),
+     BitField("HO_FLAGS_RES", None, 6),
+     BitField("HO_FLAGS_PEND", None, 1),
+     BitField("HO_FLAGS_FAIL", None, 1),
      BitField("HO_AGE", None, 32),
-     BitField("DOP", None, 32),
-     BitField("FLAGS", None, 16),
+     BitField("DOP_VAL", None, 16),
+     BitField("DOP_COLOR", None, 16),
+     BitField("FLAGS_WRELAY", None, 1),
+     BitField("FLAGS_CANACCEPT", None, 1),
+     BitField("FLAGS_ISCRITICAL", None, 1),
+     BitField("FLAGS_SCANNING", None, 1),
+     BitField("FLAGS_RES", None, 12),
      BitField("INHIBIT", None, 16),
      PacketListField("FHCTRL_ENTRIES", FHCTRL_ENTRY(), FHCTRL_ENTRY, count_from=lambda pkt:(pkt.LENGTH-34)/18)
    ]
@@ -206,7 +248,7 @@ class FHCTRL_VEHICLE_MULTI_RADIO_TLV(Packet):
 class TX_STAT(Packet):
    """
    Custom Packet class for the TX_STATS structure (part of the TX_STATS_MULTI_RADIO TLV)
-   TODO: Decode TX_FLAGS bits and TX_MCS bits
+   TODO: Decode TX_FLAGS bits and TX_MCS bits -- Completed - Needs Testing
    """
    name = "TX_STAT"
    fields_desc = [
@@ -217,8 +259,15 @@ class TX_STAT(Packet):
      BitField("FAILED", None, 32),
      BitField("BYTES", None, 32),
      BitField("AGE", None, 16),
-     BitField("TX_FLAGS", None, 8),
-     BitField("TX_MCS", None, 8)
+     BitField("TX_FLAGS_40MHZ", None, 1),
+     BitField("TX_FLAGS_RES", None, 1),
+     BitField("TX_FLAGS_80MHZ", None, 1),
+     BitField("TX_FLAGS_160MHZ", None, 1),
+     BitField("TX_FLAGS_MCSTYPE", None, 2),
+     BitField("TX_FLAGS_GI", None, 2),
+     BitField("TX_MCS_NUM", None, 4),
+     BitField("TX_MCS_SS", None, 2),
+     BitField("TX_MCS_RES", None, 2)
    ]
    def extract_padding(self, s):
     return "", s
@@ -248,8 +297,15 @@ class RX_STA(Packet):
      BitField("RECEIVED", None, 32),
      BitField("BYTES", None, 32),
      BitField("RSSI", None, 8),
-     BitField("RX_MCS", None, 8),
-     BitField("RX_FLAGS", None, 8),
+     BitField("RX_MCS_NUM", None, 4),
+     BitField("RX_MCS_SS", None, 2),
+     BitField("RX_MCS_RES", None, 2),
+     BitField("RX_FLAGS_40MHZ", None, 1),
+     BitField("RX_FLAGS_RES", None, 1),
+     BitField("RX_FLAGS_80MHZ", None, 1),
+     BitField("RX_FLAGS_160MHZ", None, 1),
+     BitField("RX_FLAGS_MCSTYPE", None, 2),
+     BitField("RX_FLAGS_GI", None, 2),
      BitField("RESERVED_1", None, 8),
      BitField("AGE", None, 16)
    ]
@@ -322,18 +378,29 @@ class AGGR_TRAFFIC_MULTI_RADIO_TLV(Packet):
 class RADIO_CFG(Packet):
    """
    Custom Packet class for the multi_radio_cfg_tlv structure (part of the RADIO_CFG_MULTI_RADIO TLV)
-   TODO: Decode DEVINFO bits, MODE bits, STATUS bits, CWIDTH bits, FREQ1 bits, FREQ2 bits
+   TODO: Decode DEVINFO bits, MODE bits, STATUS bits, CWIDTH bits, FREQ1 bits, FREQ2 bits -- Completed - Needs Testing
    """
    name = "RADIO_CFG"
    fields_desc = [
-     BitField("DEVINFO", None, 8),
-     BitField("MODE", None, 8),
+     BitField("DEVINFO_INT_ID", None, 2),
+     BitField("DEVINFO_RES", None, 6),
+     BitField("MODE_OP", None, 3),
+     BitField("MODE_RES1", None, 1),
+     BitField("MODE_INT", None, 1),
+     BitField("MODE_HE", None, 1),
+     BitField("MODE_RES2", None, 2),
      MACField("WMAC", None),
-     BitField("STATUS", None, 8),
+     BitField("STATUS_RES", None, 5),
+     BitField("STATUS_MODE", None, 1),
+     BitField("STATUS_SCAN", None, 1),
+     BitField("STATUS_TX_DIS", None, 1),
      BitField("TXPWR", None, 8),   #represents signed 8 bit integer
-     BitField("CWIDTH", None, 16),
-     BitField("FREQ1", None, 32),
-     BitField("FREQ2", None, 32)
+     BitField("CWIDTH", None, 12),
+     BitField("CWIDTH_RES", None, 4),
+     BitField("FREQ1", None, 17),
+     BitField("FREQ1_RES", None, 15),
+     BitField("FREQ2", None, 17),
+     BitField("FREQ2_RES", None, 15)
    ]
    def extract_padding(self, s):
     return "", s
@@ -397,7 +464,8 @@ class L3HANDOFF(Packet):
      BitField("VEHICLE_ID", None, 32),
      BitField("HO_SEQ", None, 32),
      BitField("AGE", None, 32),
-     BitField("URW_FLAGS", None, 8),
+     BitField("URW_FLAGS_PATHID", None, 3),
+     BitField("URW_FLAGS_RES", None, 5),
      BitField("NUM_UNITS", None, 8),
      FieldListField("UNITS", None, IPField("UNIT", None), count_from=lambda pkt:pkt.NUM_UNITS)
    ]
@@ -420,7 +488,7 @@ class HANDOFF_TBL_MUTLI_RADIO_TLV(Packet):
 class BLOCKED_RADIO(Packet):
    """
    Custom Packet class for the multi-radio blacklist structure (part of the BLOCKLIST MULTI-RADIO TLV)
-   TODO: Deocde the EXPIRY bits
+   TODO: Deocde the EXPIRY bits -- Completed - Needs Testing
    Reason Codes:
    0 - UNSPECIFIED (Not available or generic ban type)
    1 - FASTDROP (Wireless fast-drop feature)
@@ -433,7 +501,9 @@ class BLOCKED_RADIO(Packet):
    fields_desc = [
      IPField("LOCAL_IF", None),
      IPField("REMOTE_IF", None),
-     BitField("EXPIRY", None, 32)
+     BitField("EXPIRY_TIME", None, 23),
+     BitField("EXPIRY_SCALE", None, 1),
+     BitField("EXPIRY_REASON", None, 8)
    ]
    def extract_padding(self, s):
     return "", s
