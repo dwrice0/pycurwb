@@ -17,6 +17,7 @@ def decode_urwb_packet(packet):
     If URWBTelemetry layer found, show the packet
     """
     if URWBTelemetry in packet:
+        #packet.show()
         packet[URWBTelemetry].show()
 
 @app.command("capture")

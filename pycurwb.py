@@ -187,7 +187,7 @@ class PEER(Packet):
    fields_desc = [
      BitField("MESH_ID", None, 24),
      BitField("LOCAL_INT", None, 4),
-     BitField("REMOTE_INT", None, 4),
+     BitField("REMOTE_INT", None, 4)
    ]
    def extract_padding(self, s):
     return "", s
@@ -207,7 +207,7 @@ class MULTIPATH_TLV(Packet):
      BitField("FLAGS_RES2", 0, 2),
      BitField("FLAGS_MPO_PID", None, 3),
      BitField("NUM_PEERS", None, 8),
-     FieldListField("PEERS", PEER(), PEER, count_from=lambda pkt:pkt.NUM_PEERS)
+     PacketListField("PEERS", PEER(), PEER, count_from=lambda pkt:(pkt.NUM_PEERS))
    ]
    def extract_padding(self, s):
      return "", s
