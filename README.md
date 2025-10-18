@@ -17,7 +17,7 @@ pycurwb is a Python library created for decoding Cisco URWB telemetry packets us
 
 * Install pre-requisites
 ```
-pip install scapy typer
+pip install -r requirements.txt
 ```
 * To capture on Windows interface Ethernet 3 and udp port 1234
 ```
@@ -40,6 +40,8 @@ David Rice
 
 * 0.1
     * Initial Release
+* 0.1.1
+    * Updated requirements.txt with output of pip freeze. This covers requirements for the library AND the capture demo.
 
 ## License
 
